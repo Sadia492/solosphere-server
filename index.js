@@ -1,6 +1,6 @@
 const express = require("express");
 const cors = require("cors");
-const { MongoClient, ServerApiVersion } = require("mongodb");
+const { MongoClient, ServerApiVersion, ObjectId } = require("mongodb");
 require("dotenv").config();
 
 const port = process.env.PORT || 9000;
@@ -22,6 +22,54 @@ const client = new MongoClient(uri, {
 
 async function run() {
   try {
+    const jobsCollection = client.db("solosphereDB").collection("jobs");
+    const bidsCollection = client.db("solosphereDB").collection("bids");
+
+    app.get("/jobs", async (req, res) => {
+      const result = await jobsCollection.find().toArray();
+      res.send(result);
+    });
+    app.get("/job/:id", async (req, res) => {
+      const id = req.params.id;
+      const query = { _id: new ObjectId(id) };
+      const result = await jobsCollection.findOne(query);
+      res.send(result);
+    });
+    app.get("/jobs/:email", async (req, res) => {
+      const email = req.params.email;
+      const query = { email: email };
+      const result = await jobsCollection.find(query).toArray();
+      res.send(result);
+    });
+
+    app.post("/jobs", async (req, res) => {
+      const job = req.body;
+      const result = await jobsCollection.insertOne(job);
+      res.send(result);
+    });
+    app.put("/job/:id", async (req, res) => {
+      const id = req.params.id;
+      const query = { _id: new ObjectId(id) };
+      const data = req.body;
+      const updatedDoc = {
+        $set: data,
+      };
+      const result = await jobsCollection.updateOne(query, updatedDoc);
+      res.send(result);
+    });
+    app.delete("/job/:id", async (req, res) => {
+      const id = req.params.id;
+      const query = { _id: new ObjectId(id) };
+      const result = await jobsCollection.deleteOne(query);
+      res.send(result);
+    });
+    // bids works
+    app.post("/bids", async (req, res) => {
+      const bid = req.body;
+      const result = await bidsCollection.insertOne(bid);
+      res.send(result);
+    });
+
     // Send a ping to confirm a successful connection
     await client.db("admin").command({ ping: 1 });
     console.log(
